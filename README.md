@@ -2,6 +2,14 @@
 
 Ask questions about a fictional airline, inspect the generated SQL, and save interactive reports that refresh in the background.
 
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&amp;logoColor=white" alt="TypeScript 5.9" />
+  <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.12 or newer" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 17" />
+</p>
+
 React + TypeScript · FastAPI · PostgreSQL · OpenAI Responses · CopilotKit A2UI
 
 ## Run
