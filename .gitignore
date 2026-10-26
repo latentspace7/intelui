@@ -8,6 +8,8 @@
 *.pem
 *.key
 
+instructions.md
+
 .venv/
 venv/
 __pycache__/
