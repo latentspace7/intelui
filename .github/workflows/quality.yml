@@ -1,0 +1,84 @@
+name: Quality
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql+psycopg://aerovista:aerovista_demo@127.0.0.1:5432/aerovista
+      ANALYTICS_DATABASE_URL: postgresql+psycopg://airline_reader:reader_demo@127.0.0.1:5432/aerovista
+      OPENAI_API_KEY: ""
+      SCHEDULER_ENABLED: "false"
+      RUN_DB_TESTS: "1"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: aerovista
+          POSTGRES_PASSWORD: aerovista_demo
+          POSTGRES_DB: aerovista
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aerovista -d aerovista"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9
+        with:
+          version: "0.11.14"
+          python-version: "3.12.13"
+      - run: uv sync --frozen
+      - run: uv run --frozen ruff check app migrations tests
+      - run: uv run --frozen ruff format --check app migrations tests
+      - name: Initialize disposable database
+        run: |
+          uv run --frozen python - <<'PY'
+          from pathlib import Path
+          from app.db import engine
+          with engine.begin() as connection:
+              connection.exec_driver_sql(Path("../database/init.sql").read_text())
+          engine.dispose()
+          PY
+          uv run --frozen alembic upgrade head
+          uv run --frozen python -m app.seed
+      - run: uv run --frozen pytest -q
+
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22.22.3"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build

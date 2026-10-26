@@ -1,0 +1,57 @@
+name: aerovista
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: aerovista
+      POSTGRES_PASSWORD: aerovista_demo
+      POSTGRES_DB: aerovista
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - airline-data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/001-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aerovista -d aerovista"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://aerovista:aerovista_demo@db:5432/aerovista
+      ANALYTICS_DATABASE_URL: postgresql+psycopg://airline_reader:reader_demo@db:5432/aerovista
+    command: ["sh", "-c", "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "127.0.0.1:8018:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,json; r=json.load(urllib.request.urlopen('http://localhost:8000/api/health')); assert r['status']=='ok'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:5188:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  frontend-check:
+    profiles: ["tools"]
+    build:
+      context: ./frontend
+      target: build
+    command: ["npm", "test"]
+volumes:
+  airline-data:

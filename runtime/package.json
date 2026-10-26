@@ -1,0 +1,24 @@
+{
+  "name": "aerovista-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../.env src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@copilotkit/runtime": "1.80.0",
+    "@ai-sdk/openai": "^3.0.0",
+    "express": "^5.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3"
+  }
+}
