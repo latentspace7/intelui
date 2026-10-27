@@ -16,9 +16,9 @@ React + TypeScript · FastAPI · PostgreSQL · OpenAI Responses · CopilotKit A2
 
 ## Demo
 
-![AeroVista demo: ask an airline question, explore the generated report and SQL, and save it to the dashboard](docs/assets/aerovista-demo.gif)
+![AeroVista demo: revenue by travel class, booking and revenue metrics, and the saved dashboard](docs/assets/aerovista-demo.gif)
 
-Recorded locally with the live model and synthetic PostgreSQL data. Model waiting time is shortened.
+Two queries and their generated reports, followed by the saved dashboard, in the default theme. Recorded locally with the live model and synthetic PostgreSQL data; model waiting time is shortened.
 
 ## Run
 
