@@ -2,6 +2,8 @@
 
 Ask questions about a fictional airline, inspect the generated SQL, and save interactive reports that refresh in the background.
 
+This app uses **CopilotKit's A2UI for intelligent UI**, turning query results into interactive charts, tables, KPI cards, and insights through a controlled React component catalog.
+
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&amp;logoColor=white" alt="TypeScript 5.9" />
@@ -11,6 +13,12 @@ Ask questions about a fictional airline, inspect the generated SQL, and save int
 </p>
 
 React + TypeScript · FastAPI · PostgreSQL · OpenAI Responses · CopilotKit A2UI
+
+## Demo
+
+![AeroVista demo: ask an airline question, explore the generated report and SQL, and save it to the dashboard](docs/assets/aerovista-demo.gif)
+
+Recorded locally with the live model and synthetic PostgreSQL data. Model waiting time is shortened.
 
 ## Run
 
