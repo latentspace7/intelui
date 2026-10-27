@@ -25,8 +25,32 @@ class SQLPlan(StrictModel):
     title: Title
 
 
+class ColumnBinding(StrictModel):
+    field: str = Field(min_length=1, max_length=50)
+    column: str = Field(min_length=1, max_length=100)
+
+
 class Section(StrictModel):
-    kind: Literal["metric", "table", "bar", "line", "donut", "insight"]
+    kind: Literal[
+        "metric",
+        "table",
+        "bar",
+        "line",
+        "donut",
+        "insight",
+        "record_overview",
+        "checklist",
+        "document_review",
+        "quote_simulator",
+        "budget_planner",
+        "comparison",
+        "cash_flow",
+        "activity_timeline",
+        "rule_assessment",
+        "relationship_graph",
+        "milestone_tracker",
+        "pipeline",
+    ]
     title: Title
     description: str = Field(max_length=700)
     columns: list[str] = Field(max_length=12)
@@ -35,6 +59,7 @@ class Section(StrictModel):
     value_column: str | None
     row_index: int | None = Field(ge=0, le=499)
     format: Literal["number", "currency", "percent", "text"]
+    bindings: list[ColumnBinding] = Field(default_factory=list, max_length=16)
 
 
 class Presentation(StrictModel):
@@ -76,6 +101,7 @@ class Snapshot(StrictModel):
     reference_date: str
     model: str
     model_cost: ModelCost | None = None
+    catalog_example: str | None = None
 
 
 class AnalysisOut(StrictModel):
@@ -132,3 +158,6 @@ class HealthOut(StrictModel):
     reference_date: str
     scheduler_enabled: bool
     booking_count: int | None
+    company_count: int | None = None
+    contact_count: int | None = None
+    deal_count: int | None = None

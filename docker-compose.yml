@@ -23,7 +23,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://aerovista:aerovista_demo@db:5432/aerovista
       ANALYTICS_DATABASE_URL: postgresql+psycopg://airline_reader:reader_demo@db:5432/aerovista
-    command: ["sh", "-c", "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    command: ["sh", "-c", "alembic upgrade head && python -m app.seed && python -m app.crm_seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     ports:
       - "127.0.0.1:8018:8000"
     depends_on:

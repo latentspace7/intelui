@@ -31,7 +31,7 @@ def execute_query(sql: str) -> QueryResult:
     try:
         with analytics_engine.connect() as connection, connection.begin():
             connection.execute(text("SET TRANSACTION READ ONLY"))
-            connection.execute(text("SET LOCAL search_path TO airline, pg_catalog"))
+            connection.execute(text("SET LOCAL search_path TO crm, airline, pg_catalog"))
             connection.execute(
                 text(f"SET LOCAL statement_timeout = '{settings.query_timeout_ms}ms'")
             )

@@ -6,6 +6,7 @@ from sqlglot.errors import OptimizeError, ParseError
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope
 
+from app.crm_models import CRM_TABLES
 from app.errors import AppError
 from app.models import AIRLINE_TABLES
 
@@ -92,12 +93,14 @@ FORBIDDEN_NODES = {
 
 def schema_for_model() -> str:
     lines = []
-    for name, table in AIRLINE_TABLES.items():
+    for name, table in CRM_TABLES.items():
+        if name == "audit_events":
+            continue
         fields = []
         for column in table.columns:
             target = ", ".join(str(fk.target_fullname) for fk in column.foreign_keys)
             fields.append(f"{column.name} {column.type}" + (f" -> {target}" if target else ""))
-        lines.append(f"airline.{name}({'; '.join(fields)})")
+        lines.append(f"crm.{name}({'; '.join(fields)})")
     return "\n".join(lines)
 
 
@@ -143,23 +146,28 @@ def validate_sql(sql: str) -> str:
     for scope in traverse_scope(tree):
         for source in scope.sources.values():
             if isinstance(source, exp.Table):
-                if (
-                    source.catalog
-                    or source.db not in ("", "airline")
-                    or source.name not in AIRLINE_TABLES
-                ):
-                    raise AppError("unsafe_sql", "Only approved airline tables are accessible.")
+                namespace = source.db or ("crm" if source.name in CRM_TABLES else "airline")
+                tables = {"crm": CRM_TABLES, "airline": AIRLINE_TABLES}.get(namespace, {})
+                if source.catalog or source.name not in tables:
+                    raise AppError(
+                        "unsafe_sql",
+                        "Only approved business and legacy analytics tables are accessible.",
+                    )
                 if not isinstance(source.this, exp.Identifier):
                     raise AppError("unsafe_sql", "Table-valued functions are not permitted.")
                 physical_tables += 1
-                source.set("db", exp.to_identifier("airline"))
+                source.set("db", exp.to_identifier(namespace))
     if not physical_tables:
-        raise AppError("unsafe_sql", "An analytical query must read the airline dataset.")
+        raise AppError("unsafe_sql", "An analytical query must read an approved dataset.")
     schema = {
         "airline": {
             name: {column.name: str(column.type) for column in table.columns}
             for name, table in AIRLINE_TABLES.items()
-        }
+        },
+        "crm": {
+            name: {column.name: str(column.type) for column in table.columns}
+            for name, table in CRM_TABLES.items()
+        },
     }
     try:
         tree = qualify(tree, dialect="postgres", schema=schema, validate_qualify_columns=True)

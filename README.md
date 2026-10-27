@@ -1,8 +1,6 @@
-# AeroVista Intelligence
+# IntelUI — Intelligence Studio
 
-Ask questions about a fictional airline, inspect the generated SQL, and save interactive reports that refresh in the background.
-
-This app uses **CopilotKit's A2UI for intelligent UI**, turning query results into interactive charts, tables, KPI cards, and insights through a controlled React component catalog.
+A conversational analytics system for exploring business data through intelligent interfaces. Explore synthetic business data through conversation, use twelve interactive React components, and save reports that refresh from PostgreSQL.
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19" />
@@ -12,125 +10,110 @@ This app uses **CopilotKit's A2UI for intelligent UI**, turning query results in
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 17" />
 </p>
 
-React + TypeScript · FastAPI · PostgreSQL · OpenAI Responses · CopilotKit A2UI
+React + TypeScript · FastAPI · PostgreSQL · CopilotKit A2UI
 
 ## Demo
 
-![AeroVista demo: revenue by travel class, booking and revenue metrics, and the saved dashboard](docs/assets/aerovista-demo.gif)
+![IntelUI Intelligence Studio demo showing live deal-pipeline and quote-simulator queries, scenario adjustments, and the relationship explorer](docs/assets/intelui-crm-demo.gif)
 
-Two queries and their generated reports, followed by the saved dashboard, in the default theme. Recorded locally with the live model and synthetic PostgreSQL data; model waiting time is shortened.
+Two live analytics queries, interactive quote adjustments, and a tour of the component library in the default light theme. Model waiting time is shortened.
 
 ## Run
 
-Requires Docker with Compose. From this directory:
+Requires Docker with Compose. If you do not already have a root `.env`:
 
 ```sh
 cp .env.example .env
 ```
 
-Set `OPENAI_API_KEY` in `.env`, then:
+Then start the app:
 
 ```sh
 docker compose up -d --build
 ```
 
-Open **[localhost:5188](http://localhost:5188)**. The backend runs migrations and seeds the database automatically. [API documentation](http://localhost:8018/docs) and [health](http://localhost:8018/api/health) are available on port 8018. PostgreSQL is exposed locally on 55432. These ports avoid common development-server conflicts.
+Open **[localhost:5188](http://localhost:5188)** and select **Component library**. All twelve examples run real read-only SQL and work without a model key. **Open as report** brings an example into a conversation, where it can be saved to the dashboard.
 
-If `.env` already exists, edit it instead of overwriting it. Secrets stay on the backend and are excluded from Git and frontend builds. After changing model configuration or the key, run `docker compose up -d --force-recreate backend`.
+For natural-language analysis, set `OPENAI_API_KEY` in the root `.env` and recreate the backend:
 
-## Try it
+```sh
+docker compose up -d --force-recreate backend
+```
 
-- “Show airline revenue by travel class over the last six months.”
-- “Which routes generated the highest revenue?”
-- “How have flight cancellations changed over the last six months?”
-- “Show unresolved complaints associated with business-class passengers.”
-- “Generate an executive summary of the airline’s operational performance.”
+The backend runs migrations and seeds missing demo records automatically. API docs are at [localhost:8018/docs](http://localhost:8018/docs); PostgreSQL is exposed on localhost:55432. Existing database/volume names and legacy airline reports are retained during upgrades. The active workspace and model schema use the synthetic business dataset.
 
-Follow up in the same conversation, expand **Query details**, or use **Save to dashboard**. On the dashboard you can rename, reorder, delete, refresh, and schedule reports. Intervals are manual, 1, 4, 12, or 24 hours. The backend must remain running for automatic updates; the browser can be closed.
+## Component catalog
 
-## What runs
+| Component | Interaction |
+| --- | --- |
+| Account overview | Search companies, filter status, inspect ownership and recorded value |
+| Work checklist | Filter tasks and save status changes with an audit entry |
+| Document review | Compare declared/extracted fields with source text and save review status |
+| Quote simulator | Adjust seats, term, and discount; compare with the saved subscription quote |
+| Budget planner | Adjust monthly income, expenses, and additional spend |
+| Option comparison | Select service options and compare total contract values |
+| Cash-flow explorer | Filter monthly inflows/outflows and inspect source entries |
+| Activity timeline | Filter and expand calls, emails, meetings, and notes |
+| Business-rule checks | Inspect recorded observations, thresholds, versions, and deterministic results |
+| Relationship explorer | Select companies/contacts, inspect connections, and zoom the graph |
+| Delivery milestones | Select an account and track completion, owners, dates, and blockers |
+| Deal pipeline | Filter by owner, inspect stage totals, and open individual deal details |
+
+The existing KPI cards, bar/line/donut charts, sortable tables, and narrative sections remain available. Components render through the official `@copilotkit/a2ui-renderer` with an allowlisted catalog. The model selects components and column bindings; the server supplies their values from actual query results. No generated JavaScript is executed.
+
+Try these questions:
+
+- “Show our deal pipeline by stage with owners and close dates.”
+- “Review the declared and extracted document fields for Northstar Labs.”
+- “Build an interactive quote simulator for Northstar Labs.”
+- “Show the company and contact relationships around Northstar Labs.”
+- “Show won deal value by deal creation month over the last six months.”
+
+## Synthetic data
+
+The initial data batch has **1,814 connected records**: 24 companies, 72 contacts, 8 staff, 96 deals, 288 tasks, 96 documents, 288 document fields, 6 products, 72 quotes, 432 cash entries, 192 activities, 24 company relationships, 96 recorded rule checks, and 120 milestones. Identities use `example.invalid` addresses. All amounts are USD.
+
+Append another complete batch:
+
+```sh
+docker compose exec backend python -m app.crm_seed --batch 1
+```
+
+Use batch 2, 3, and so on, up to 99, to grow the dataset. Each batch uses distinct IDs and company names. Repeating a batch inserts only missing rows and preserves existing edits. There is no destructive data reset command. Reload component data or refresh saved reports after adding records. Northstar examples intentionally stay focused on the original account; broader account and pipeline views include additional batches within their query limits.
+
+To customize the records, edit [crm_seed.py](backend/app/crm_seed.py) and use a new batch number. Table definitions live in [crm_models.py](backend/app/crm_models.py); schema changes require an Alembic migration.
+
+## Data and actions
 
 ```mermaid
 flowchart LR
-  Q[Your question] --> AI[Model generates SQL]
-  AI --> V[Validate AST and schema]
-  V --> PG[(Read-only PostgreSQL)]
-  PG --> P[Model selects presentation]
-  P --> UI[CopilotKit A2UI catalog]
-  UI --> D[(Saved report)]
-  D --> R[Backend refresh scheduler]
-  R --> V
+  Q[Question] --> SQL[Model plans read-only SQL]
+  SQL --> V[Validate SQL and schema]
+  V --> DB[(PostgreSQL business data)]
+  DB --> P[Model selects components and bindings]
+  P --> C[Validate and bind database values]
+  C --> UI[React A2UI catalog]
+  E[Component examples] --> V
+  E --> C
+  UI --> R[Saved report and refresh schedule]
 ```
 
-The model produces SQL and a typed presentation plan. SQLGlot validates statements, relations, columns, and functions before a separate read-only database login executes them. The model then chooses KPI cards, bar/line/donut charts, tables, and insights. The server binds all displayed data values to actual result rows. CopilotKit's official A2UI renderer renders the resulting document with a controlled React catalog. No arbitrary generated code runs in the browser or database.
+Query details expose SQL, returned rows, and model cost when recorded. Reports can be renamed, reordered, removed, and refreshed manually or every 1, 4, 12, or 24 hours. Scheduled refresh requires the backend to remain running. Failed refreshes retain the last successful snapshot. Catalog-example reports refresh without calling a model; AI-generated reports regenerate their presentation from saved SQL.
 
-Both conversation history and dashboard snapshots live in PostgreSQL. Scheduled jobs use PostgreSQL row locks, so multiple backend workers cannot refresh the same report concurrently. Failed refreshes preserve the last successful report.
+Task and document-review changes use dedicated backend endpoints, check the displayed record identity and previous status, and write `crm.audit_events`. Mismatched document fields cannot be accepted. Saved report snapshots do not rewrite themselves after an edit; refresh them to see current data. Quote and budget controls are local scenarios and do not modify source records.
 
-The intended framework is [CopilotKit/OpenIntelligentUI](https://github.com/CopilotKit/OpenIntelligentUI), a separate project from GitHub Copilot. This implementation uses its official structured A2UI rendering path, with custom analytics components; it does not reproduce its open-ended JavaScript sandbox or Jev router. See [framework research](docs/intelligent-ui-research.md) and [architecture](docs/architecture.md).
+## Extend the catalog
 
-## Configuration
+1. Build a React component under [frontend/src/crm](frontend/src/crm).
+2. Add its strict props schema in [schemas.ts](frontend/src/crm/schemas.ts) and register it in [ReportRenderer.tsx](frontend/src/ReportRenderer.tsx).
+3. Add a section kind in [contracts.py](backend/app/contracts.py) and [api.ts](frontend/src/api.ts).
+4. Define required column bindings and an example query in [crm_catalog.py](backend/app/crm_catalog.py), then add its library icon in [ComponentLibrary.tsx](frontend/src/ComponentLibrary.tsx).
 
-| Setting | Default / purpose |
-| --- | --- |
-| `OPENAI_API_KEY` | Required for live analysis and refresh |
-| `OPENAI_MODEL` | `gpt-6-luna`, verified in [official documentation](https://developers.openai.com/api/docs/models/gpt-6-luna) |
-| `AI_PROVIDER` | `openai`; also accepts `openai-compatible` for compatible Responses endpoints |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` |
-| `OPENAI_REASONING_EFFORT` | `medium`; leave blank for providers without this parameter |
-| `DEMO_REFERENCE_DATE` | `2026-10-26`; all relative analytical dates use this fixed date |
-| `QUERY_TIMEOUT_MS` | 5000 |
-| `MAX_RESULT_ROWS` | 200 |
-| `AI_TIMEOUT_SECONDS` | 90 per provider call; no automatic transport retries |
-| `SCHEDULER_ENABLED` | `true` |
-| `SCHEDULER_POLL_SECONDS` | 30 |
-| `DATABASE_URL` | Owner connection for application persistence; Compose sets its internal hostname |
-| `ANALYTICS_DATABASE_URL` | Separate `airline_reader` login; Compose sets its internal hostname |
+The model receives the catalog descriptions and binding requirements automatically. Both analysis and saved-report refresh use the same validation and rendering path.
 
-Provider integration is isolated in `backend/app/provider.py`. Other API protocols require an adapter. Analysis normally makes two model calls, with at most one SQL repair attempt; refreshing makes one presentation call. These use your API account and can incur charges. Health checks never call the model and cannot confirm model access.
+## Checks
 
-## Dataset and reset
-
-The deterministic seed contains 40 customers, 3 aircraft, 36 flights, 100 bookings, 100 payments, 44 complaints, 49 service requests, and 56 conversations. All identities are synthetic. Completed payments define default net revenue; booking totals are gross value and include refunded/cancelled tickets. All amounts are USD. “Delayed” denotes an arrived flight that departed late. The date range supports six-month trends and the demo's current month.
-
-Safe repeat seed (does nothing once seeded):
-
-```sh
-docker compose exec backend python -m app.seed
-```
-
-Replace only synthetic airline records, retaining saved reports and conversations:
-
-```sh
-docker compose exec backend python -m app.seed --reset
-```
-
-Refresh saved reports afterward. To move the demo period, change `DEMO_REFERENCE_DATE`, recreate the backend, and reset the seed. Existing report SQL retains its original reference-date literals; generate new reports for the new period.
-
-To stop without losing data: `docker compose down`. To erase **all demo data and saved reports**, use `docker compose down -v`, then start again.
-
-## Development and checks
-
-Node 22.12+ and Python 3.12+ with uv are required for native development. Start PostgreSQL using `docker compose up -d db`.
-
-Backend, in one terminal:
-
-```sh
-cd backend
-uv sync --frozen
-uv run alembic upgrade head
-uv run python -m app.seed
-uv run uvicorn app.main:app --reload --port 8018
-```
-
-Frontend, in another terminal:
-
-```sh
-cd frontend
-npm ci
-npm run dev
-```
-
-Stop Compose's backend/frontend first if using the same ports. The root `.env` is loaded by the native backend. Vite development and preview servers bind to `127.0.0.1`; the development proxy forwards `/api` to 8018.
+Native development requires Node 22.12+ and Python 3.12+ with uv. Start PostgreSQL first. Install backend dependencies with `uv sync --frozen` and frontend dependencies with `npm ci`.
 
 ```sh
 cd backend
@@ -139,11 +122,7 @@ uv run ruff check app migrations tests
 uv run ruff format --check app migrations tests
 ```
 
-Integration tests use the seeded demo database, create temporary report records, and restore test changes. They mock model calls at the provider boundary and execute real SQL:
-
-```sh
-docker compose exec -e RUN_DB_TESTS=1 backend pytest -q -p no:cacheprovider
-```
+For real-database tests, use a disposable migrated and seeded database, set both database URLs, and run with `RUN_DB_TESTS=1`. Initialize the reader role using `database/init.sql`, then run `alembic upgrade head`, `python -m app.seed`, and `python -m app.crm_seed`. The CI workflow does this automatically.
 
 ```sh
 cd frontend
@@ -153,25 +132,24 @@ npm run format:check
 npm run build
 ```
 
-The [quality workflow](.github/workflows/quality.yml) runs these checks on pushes and pull requests. Its backend job initializes a disposable PostgreSQL 17 database, applies migrations and seed data, and runs all integration tests with mocked model calls. It requires no API key and does not deploy the application. See [validation results](docs/validation.md) for local evidence and remaining limits.
-
-To run all 15 acceptance questions through the **real model** (billable; adds conversation history):
+Live model acceptance is separate and billable; it adds synthetic conversation history:
 
 ```sh
-docker compose exec backend python tests/live_acceptance.py
+docker compose exec backend python -m tests.crm_live_acceptance --base-url http://127.0.0.1:8000
 ```
 
-Use `--only 2 5 15` for selected scenarios. Results are written to `/tmp/aerovista-live-results.json` inside the backend container. Automated tests cover seed relationships, SQL rejection/acceptance, schema validation, request bounds, real database permissions, CRUD, changed-data refresh, refresh failures, follow-ups, scheduling, concurrent refresh exclusion, and the actual A2UI renderer.
+Use `--only quote_simulator relationship_graph` for selected checks. Results are written to `/tmp/intelui-crm-live-results.json` inside the container.
 
-## Scope and limits
+Verified locally: 84 backend tests with PostgreSQL, 20 frontend tests, lint/format checks, production builds, all twelve components in Chrome at desktop and phone widths, and twelve live-model requests selecting the expected components. Local verification does not imply a production deployment.
 
-- Single local demo user; no authentication or tenancy. Services bind to localhost.
-- Responses arrive as complete reports; token/AG-UI streaming is not implemented.
-- Charts use one query result per analysis; a report may show several views of those rows. Use another analysis for unrelated datasets.
-- SQL generation and model-written prose can still be analytically wrong. Inspect SQL and data; UI validation prevents unsupported components and invented bound values, not every reasoning mistake.
-- SQL and function allowlists are deliberately narrow. Unsupported queries receive a useful error after one repair attempt.
-- Schedules are persistent and locked across workers. A crash during a model request can cause that model call to be repeated after restart, though concurrent jobs cannot commit duplicate refreshes.
-- Seed data does not change automatically. Refresh reads current PostgreSQL data; it does not manufacture new transactions.
-- A fresh page opens a new analysis; previous conversations remain selectable in the sidebar and dashboard reports persist.
+## Scope
 
-See [validation results](docs/validation.md) for the checks actually completed in this checkout.
+- A local single-user demo; no authentication, tenancy, external business-system synchronization, or production permission model. Services bind to localhost.
+- Synthetic documents are plain text with seeded extracted fields. PDF upload, OCR, credit checks, and lending workflows are not implemented.
+- Business-rule checks use recorded demo observations. They do not provide live compliance assessments or approval decisions.
+- Quotes use per-seat monthly pricing, a discount, and a one-time setup fee; taxes are excluded. Budget assumptions are separate from the recorded cash ledger.
+- Deal values are contract values, not cash receipts. No actual close date is recorded; date-based deal analysis must identify its creation-date or expected-close basis.
+- Results are bounded to 200 rows by default, with additional limits on some example views. Totals describe returned records; ask narrower questions as the dataset grows.
+- Each analysis uses one SQL result. Responses arrive as completed reports; token streaming is not implemented. AI-written SQL and prose can still be analytically wrong.
+
+Configuration remains in [.env.example](.env.example). `DEMO_REFERENCE_DATE` defaults to `2026-10-26` for reproducible dates; existing seed batches and saved SQL retain their original dates. `OPENAI_MODEL`, `AI_PROVIDER`, and `OPENAI_BASE_URL` configure the existing Responses-compatible provider. Secrets stay on the backend.

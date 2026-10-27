@@ -22,6 +22,8 @@ from app.contracts import (
     SaveReport,
     UpdateReport,
 )
+from app.crm_api import router as crm_router
+from app.crm_models import CRM_TABLES
 from app.db import analytics_engine, engine, get_session
 from app.errors import AppError
 from app.models import Analysis, Booking, Report, utcnow
@@ -46,7 +48,8 @@ async def lifespan(app: FastAPI):
     analytics_engine.dispose()
 
 
-app = FastAPI(title="AeroVista Intelligence", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="IntelUI Intelligence Studio", version="0.2.0", lifespan=lifespan)
+app.include_router(crm_router)
 DB = Annotated[Session, Depends(get_session)]
 Provider = Annotated[AnalyticsProvider, Depends(get_provider)]
 
@@ -139,13 +142,18 @@ def health():
     database = False
     analytics = False
     bookings = None
+    crm_counts = {}
     try:
         with engine.connect() as connection:
             bookings = connection.scalar(select(func.count()).select_from(Booking))
             connection.execute(select(Report.id).limit(1))
+            crm_counts = {
+                name: connection.scalar(select(func.count()).select_from(CRM_TABLES[name]))
+                for name in ("companies", "contacts", "deals")
+            }
             database = True
         with analytics_engine.connect() as connection:
-            connection.execute(text("SELECT id FROM airline.bookings LIMIT 1"))
+            connection.execute(text("SELECT id FROM crm.companies LIMIT 1"))
             analytics = True
     except SQLAlchemyError:
         pass
@@ -158,6 +166,9 @@ def health():
         reference_date=str(settings.demo_reference_date),
         scheduler_enabled=settings.scheduler_enabled,
         booking_count=bookings,
+        company_count=crm_counts.get("companies"),
+        contact_count=crm_counts.get("contacts"),
+        deal_count=crm_counts.get("deals"),
     )
 
 

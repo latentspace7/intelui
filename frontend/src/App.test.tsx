@@ -98,7 +98,9 @@ describe('Critical workspace interactions', () => {
     await act(async () => fail(new Error('The model provider is unavailable.')))
     expect(await screen.findByRole('alert')).toHaveTextContent('model provider is unavailable')
     expect(question).toBeEnabled()
-    expect(question).toHaveValue('Show revenue by travel class over the last six months.')
+    expect(question).toHaveValue(
+      'Show won deal value by deal creation month over the last six months.',
+    )
     expect(question).toHaveFocus()
   })
 

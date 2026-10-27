@@ -1,10 +1,13 @@
 from app.contracts import Presentation, QueryResult
+from app.crm_catalog import CRM_COMPONENTS, bind_component
 from app.errors import AppError
 
 CATALOG_ID = "aerovista://analytics/v1"
 
 
-def compile_ui(plan: Presentation, result: QueryResult) -> list[dict]:
+def compile_ui(
+    plan: Presentation, result: QueryResult, reference_date: str | None = None
+) -> list[dict]:
     components: list[dict] = []
     data_sections = 0
     for index, section in enumerate(plan.sections):
@@ -24,7 +27,10 @@ def compile_ui(plan: Presentation, result: QueryResult) -> list[dict]:
             raise AppError(
                 "invalid_ui", "The report references a column that is not in the query result.", 502
             )
-        if section.kind == "metric":
+        if section.kind in CRM_COMPONENTS:
+            node.update(bind_component(section, result, reference_date=reference_date))
+            data_sections += 1
+        elif section.kind == "metric":
             if (
                 section.value_column is None
                 or section.row_index is None

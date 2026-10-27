@@ -24,7 +24,7 @@ def create_snapshot(
     summary = "No matching records were found. Try a broader time period or different filters."
     if result.rows:
         plan = provider.present(question, result)
-        ui = compile_ui(plan, result)
+        ui = compile_ui(plan, result, reference_date=reference_date)
         summary = plan.summary
         title = plan.title
     return Snapshot(
@@ -68,7 +68,7 @@ def analyze(request: AskRequest, session: Session, provider: AnalyticsProvider) 
             plan = provider.plan(request.question, context, repair)
             if plan.status != "ready":
                 raise AppError(
-                    plan.status, plan.message or "Please ask a question about the airline dataset."
+                    plan.status, plan.message or "Please ask a question about the business dataset."
                 )
             try:
                 snapshot = create_snapshot(request.question, plan.sql, provider, plan.title)

@@ -7,6 +7,7 @@ from sqlalchemy import select
 from app.analytics import create_snapshot
 from app.config import settings
 from app.costs import capture_cost, total_cost
+from app.crm_catalog import example_snapshot
 from app.db import SessionLocal
 from app.errors import AppError
 from app.models import Report, utcnow
@@ -33,12 +34,19 @@ def refresh_report(report_id: str, provider: AnalyticsProvider, scheduled: bool 
         report.last_attempt_at = utcnow()
         try:
             with capture_cost() as calls:
-                snapshot = create_snapshot(
-                    report.question,
-                    report.snapshot["result"]["sql"],
-                    provider,
-                    report.title,
-                    reference_date=report.snapshot["reference_date"],
+                snapshot = (
+                    example_snapshot(
+                        report.snapshot["catalog_example"],
+                        reference_date=report.snapshot["reference_date"],
+                    )
+                    if report.snapshot.get("catalog_example")
+                    else create_snapshot(
+                        report.question,
+                        report.snapshot["result"]["sql"],
+                        provider,
+                        report.title,
+                        reference_date=report.snapshot["reference_date"],
+                    )
                 )
                 snapshot.model_cost = total_cost(calls)
             report.snapshot = snapshot.model_dump(mode="json")

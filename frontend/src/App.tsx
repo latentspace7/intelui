@@ -17,7 +17,8 @@ import {
   MessageSquare,
   Moon,
   Pencil,
-  Plane,
+  Building2,
+  LayoutGrid,
   Plus,
   RefreshCw,
   Settings2,
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react'
 import { api, type Analysis, type Report } from './api'
 import ReportRenderer from './ReportRenderer'
+import ComponentLibrary from './ComponentLibrary'
 
 const intervals = [
   { value: 0, label: 'Manual only' },
@@ -41,25 +43,25 @@ const questions = [
   {
     icon: TrendingUp,
     label: 'Explore revenue',
-    text: 'Show revenue by travel class over the last six months.',
+    text: 'Show won deal value by deal creation month over the last six months.',
     tint: 'blue',
   },
   {
-    icon: Plane,
-    label: 'Understand operations',
-    text: 'How have flight cancellations changed over the last six months?',
+    icon: Building2,
+    label: 'Explore the pipeline',
+    text: 'Show our deal pipeline by stage with owners and close dates.',
     tint: 'green',
   },
   {
     icon: MessageSquare,
-    label: 'Listen to customers',
-    text: 'Which customers have submitted the most complaints?',
+    label: 'Review account activity',
+    text: 'Show Northstar Labs account activity as an interactive timeline.',
     tint: 'purple',
   },
   {
     icon: BarChart3,
-    label: 'See the bigger picture',
-    text: 'Generate an executive summary of the airline’s operational performance.',
+    label: 'Connect the dots',
+    text: 'Show the company and contact relationships around Northstar Labs.',
     tint: 'orange',
   },
 ]
@@ -371,7 +373,7 @@ function DashboardCard({
 
 export default function App() {
   const client = useQueryClient()
-  const [page, setPage] = useState<'analysis' | 'dashboard'>('analysis')
+  const [page, setPage] = useState<'analysis' | 'dashboard' | 'catalog'>('analysis')
   const [currentId, setCurrentId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [pendingQuestion, setPendingQuestion] = useState('')
@@ -471,12 +473,12 @@ export default function App() {
         />
       )}
       <aside className={`sidebar ${sidebar ? 'is-open' : ''}`}>
-        <button className="brand" onClick={newAnalysis} aria-label="AeroVista home">
+        <button className="brand" onClick={newAnalysis} aria-label="IntelUI home">
           <span className="brand-mark">
-            <Plane size={20} strokeWidth={1.8} />
+            <Building2 size={20} strokeWidth={1.8} />
           </span>
           <span>
-            AeroVista<small>INTELLIGENCE</small>
+            IntelUI<small>INTELLIGENCE STUDIO</small>
           </span>
         </button>
         <button className="new-analysis" onClick={newAnalysis} disabled={ask.isPending}>
@@ -506,6 +508,17 @@ export default function App() {
             {reports.data?.length ? (
               <span className="count-badge">{reports.data.length}</span>
             ) : null}
+          </button>
+          <button
+            className={page === 'catalog' ? 'nav-item active' : 'nav-item'}
+            onClick={() => {
+              setPage('catalog')
+              setSidebar(false)
+            }}
+          >
+            <LayoutGrid size={17} />
+            Component library
+            <span className="count-badge">12</span>
           </button>
         </nav>
         <div className="history-heading">RECENT ANALYSES</div>
@@ -544,13 +557,16 @@ export default function App() {
               <Database size={16} />
             </span>
             <div>
-              <strong>AeroVista demo data</strong>
-              <span>{health.data?.booking_count ?? '—'} bookings · PostgreSQL</span>
+              <strong>IntelUI demo data</strong>
+              <span>
+                {health.data?.company_count ?? '—'} companies · {health.data?.deal_count ?? '—'}{' '}
+                deals
+              </span>
             </div>
             <i className={health.data?.database ? 'connection-dot' : 'connection-dot offline'} />
           </div>
           <button className="profile" onClick={() => setSettings(true)}>
-            <span className="avatar">AV</span>
+            <span className="avatar">IC</span>
             <span>
               <strong>Demo workspace</strong>
               <small>Your personal analytics</small>
@@ -570,7 +586,11 @@ export default function App() {
               <Menu size={20} />
             </button>
             <span className="workspace-title">
-              {page === 'dashboard' ? 'My dashboard' : 'Analysis workspace'}
+              {page === 'dashboard'
+                ? 'My dashboard'
+                : page === 'catalog'
+                  ? 'Component library'
+                  : 'Analysis workspace'}
             </span>
             <span className="demo-badge">DEMO</span>
           </div>
@@ -599,7 +619,22 @@ export default function App() {
             </button>
           </div>
         </header>
-        {page === 'dashboard' ? (
+        {page === 'catalog' ? (
+          <ComponentLibrary
+            openAnalysis={(analysis) => {
+              client.setQueryData(['thread', analysis.id], [analysis])
+              client.invalidateQueries({ queryKey: ['history'] })
+              setCurrentId(analysis.id)
+              setPage('analysis')
+              setDraft('')
+              ask.reset()
+            }}
+            askQuestion={(question) => {
+              newAnalysis()
+              setDraft(question)
+            }}
+          />
+        ) : page === 'dashboard' ? (
           <div className="dashboard-content">
             <div className="page-intro">
               <span className="eyebrow">YOUR PERSONAL VIEW</span>
@@ -655,13 +690,13 @@ export default function App() {
             {landing ? (
               <div className="welcome">
                 <div className="welcome-symbol">
-                  <Plane size={30} strokeWidth={1.4} />
+                  <Building2 size={30} strokeWidth={1.4} />
                   <span className="sparkle-small">✦</span>
                 </div>
-                <div className="eyebrow">AEROVISTA INTELLIGENCE</div>
+                <div className="eyebrow">INTELUI INTELLIGENCE STUDIO</div>
                 <h1>Where will your curiosity take you?</h1>
                 <p>
-                  Turn your airline data into a clearer picture.
+                  Turn your business data into a clearer picture.
                   <br />
                   Ask a question. Find a pattern. Make your next move.
                 </p>
@@ -681,9 +716,14 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+                <button className="library-launch" onClick={() => setPage('catalog')}>
+                  <LayoutGrid size={17} />
+                  Explore 12 interactive analytics components
+                  <ArrowRight size={15} />
+                </button>
                 <div className="source-note">
                   <Database size={13} />
-                  Synthetic airline data<span>·</span>
+                  Synthetic business data<span>·</span>
                   <span>Reference date {health.data?.reference_date || '2026-10-26'}</span>
                 </div>
               </div>
@@ -704,7 +744,7 @@ export default function App() {
                         <span className="assistant-mark">
                           <Sparkles size={16} />
                         </span>
-                        <strong>AeroVista</strong>
+                        <strong>IntelUI</strong>
                         <span>Analysis</span>
                       </div>
                       <h2>{analysis.snapshot.title}</h2>
@@ -732,7 +772,7 @@ export default function App() {
                       <div>
                         <strong>I’ll look into that for you.</strong>
                         <p>
-                          I’m checking the airline data and preparing your report. This may take a
+                          I’m checking the business data and preparing your report. This may take a
                           minute or two.
                         </p>
                         <div className="loading-track">
@@ -755,7 +795,7 @@ export default function App() {
               {!health.isLoading && !ready && (
                 <div className="setup-note">
                   {health.error || !health.data?.database
-                    ? 'Start the backend and PostgreSQL to connect the airline dataset.'
+                    ? 'Start the backend and PostgreSQL to connect the analytics dataset.'
                     : !health.data?.model_configured
                       ? 'Add your OpenAI key to the server .env and restart the backend to begin.'
                       : 'The read-only analytics connection needs attention.'}
@@ -774,7 +814,7 @@ export default function App() {
                       ? 'Preparing your report… You can ask another question when it’s ready.'
                       : currentId
                         ? 'Ask a follow-up about this analysis…'
-                        : 'Ask anything about your airline data…'
+                        : 'Ask anything about your business data…'
                   }
                   aria-label="Ask an analytical question"
                   onKeyDown={(event) => {
@@ -791,7 +831,7 @@ export default function App() {
                 <div className="composer-bottom">
                   <span>
                     <Sparkles size={14} />
-                    Airline analyst
+                    Analytics assistant
                     <ChevronDown size={12} />
                   </span>
                   <button
@@ -826,13 +866,18 @@ export default function App() {
         />
       )}
       {settings && (
-        <Modal title="Your AeroVista workspace" close={() => setSettings(false)}>
+        <Modal title="Your IntelUI workspace" close={() => setSettings(false)}>
           <div className="settings-body">
             <p>
-              A personal workspace for exploring a fictional airline. Every analysis runs against
-              the seeded PostgreSQL dataset.
+              A personal analytics workspace for exploring a fictional business. Every analysis runs
+              against the seeded PostgreSQL dataset.
             </p>
             <dl>
+              <dt>Business dataset</dt>
+              <dd>
+                {health.data?.company_count ?? '—'} companies · {health.data?.contact_count ?? '—'}{' '}
+                contacts · {health.data?.deal_count ?? '—'} deals
+              </dd>
               <dt>Model</dt>
               <dd>{health.data?.model || 'Not connected'}</dd>
               <dt>Demo reference date</dt>
@@ -855,9 +900,9 @@ export default function App() {
               </dd>
             </dl>
             <p className="field-help">
-              Revenue defaults to completed payments in USD. The demo reference date keeps
-              time-based questions reproducible. Refreshing updates reports from the current
-              database; it does not generate new airline records.
+              Deal values and recorded cash flows are separate measures, in USD. The demo reference
+              date keeps time-based questions reproducible. Refreshing updates reports from the
+              current database; it does not generate new business records.
             </p>
           </div>
         </Modal>

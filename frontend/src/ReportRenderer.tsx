@@ -32,6 +32,18 @@ import {
 import { ArrowDownUp, ChevronLeft, ChevronRight, Database, Lightbulb } from 'lucide-react'
 import { z } from 'zod'
 import { formatSchema, rowSchema, type Row, type Snapshot, type ValueFormat } from './api'
+import { crmDefinitions } from './crm/schemas'
+import {
+  RecordOverview,
+  Checklist,
+  DocumentReview,
+  ActivityTimeline,
+  MilestoneTracker,
+  Pipeline,
+  RuleAssessment,
+} from './crm/RecordViews'
+import { QuoteSimulator, BudgetPlanner, Comparison, CashFlow } from './crm/FinanceViews'
+import { RelationshipGraph } from './crm/RelationshipGraph'
 
 const colors = Array.from({ length: 12 }, (_, index) => `var(--chart-${index + 1})`)
 const humanize = (value: string) =>
@@ -140,6 +152,7 @@ function DataTable({ columns, rows, title }: { columns: string[]; rows: Row[]; t
 
 const common = { title: z.string().max(120), description: z.string().max(700) }
 const definitions = {
+  ...crmDefinitions,
   Stack: { props: z.object({ items: z.array(z.string()).max(8) }) },
   Metric: {
     props: z.object({
@@ -363,11 +376,55 @@ const catalog = createCatalog(
       </section>
     ),
     Chart: ({ props }) => <ChartPanel {...props} />,
+    RecordOverview: ({ props }) => <RecordOverview {...props} />,
+    Checklist: ({ props }) => <Checklist {...props} />,
+    DocumentReview: ({ props }) => <DocumentReview {...props} />,
+    QuoteSimulator: ({ props }) => <QuoteSimulator {...props} />,
+    BudgetPlanner: ({ props }) => <BudgetPlanner {...props} />,
+    Comparison: ({ props }) => <Comparison {...props} />,
+    CashFlow: ({ props }) => <CashFlow {...props} />,
+    ActivityTimeline: ({ props }) => <ActivityTimeline {...props} />,
+    RuleAssessment: ({ props }) => <RuleAssessment {...props} />,
+    RelationshipGraph: ({ props }) => <RelationshipGraph {...props} />,
+    MilestoneTracker: ({ props }) => <MilestoneTracker {...props} />,
+    Pipeline: ({ props }) => <Pipeline {...props} />,
   },
   { catalogId: 'aerovista://analytics/v1', includeBasicCatalog: false },
 )
 
 const componentSchema = z.discriminatedUnion('component', [
+  definitions.RecordOverview.props
+    .extend({ id: z.string(), component: z.literal('RecordOverview') })
+    .strict(),
+  definitions.Checklist.props
+    .extend({ id: z.string(), component: z.literal('Checklist') })
+    .strict(),
+  definitions.DocumentReview.props
+    .extend({ id: z.string(), component: z.literal('DocumentReview') })
+    .strict(),
+  definitions.QuoteSimulator.props
+    .extend({ id: z.string(), component: z.literal('QuoteSimulator') })
+    .strict(),
+  definitions.BudgetPlanner.props
+    .extend({ id: z.string(), component: z.literal('BudgetPlanner') })
+    .strict(),
+  definitions.Comparison.props
+    .extend({ id: z.string(), component: z.literal('Comparison') })
+    .strict(),
+  definitions.CashFlow.props.extend({ id: z.string(), component: z.literal('CashFlow') }).strict(),
+  definitions.ActivityTimeline.props
+    .extend({ id: z.string(), component: z.literal('ActivityTimeline') })
+    .strict(),
+  definitions.RuleAssessment.props
+    .extend({ id: z.string(), component: z.literal('RuleAssessment') })
+    .strict(),
+  definitions.RelationshipGraph.props
+    .extend({ id: z.string(), component: z.literal('RelationshipGraph') })
+    .strict(),
+  definitions.MilestoneTracker.props
+    .extend({ id: z.string(), component: z.literal('MilestoneTracker') })
+    .strict(),
+  definitions.Pipeline.props.extend({ id: z.string(), component: z.literal('Pipeline') }).strict(),
   definitions.Stack.props.extend({ id: z.string(), component: z.literal('Stack') }).strict(),
   definitions.Metric.props.extend({ id: z.string(), component: z.literal('Metric') }).strict(),
   definitions.Narrative.props
@@ -438,16 +495,18 @@ class RendererBoundary extends Component<{ children: ReactNode }, { failed: bool
 
 export default function ReportRenderer({ snapshot }: { snapshot: Snapshot }) {
   const cost = snapshot.model_cost
-  const costLabel = !cost
-    ? 'Cost not recorded'
-    : cost.estimated_usd === null
-      ? 'Cost unavailable'
-      : `Est. ${new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 6,
-        }).format(cost.estimated_usd)} USD`
+  const costLabel = snapshot.catalog_example
+    ? 'No model call'
+    : !cost
+      ? 'Cost not recorded'
+      : cost.estimated_usd === null
+        ? 'Cost unavailable'
+        : `Est. ${new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 6,
+          }).format(cost.estimated_usd)} USD`
   return (
     <div className="generated-report">
       <p className="analysis-summary">{snapshot.summary}</p>

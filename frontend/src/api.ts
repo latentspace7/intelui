@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { crmKinds } from './crm/schemas'
 
 export const scalar = z.union([z.string(), z.number(), z.boolean(), z.null()])
 export const rowSchema = z.record(scalar)
@@ -6,7 +7,7 @@ export type Row = z.infer<typeof rowSchema>
 export const formatSchema = z.enum(['number', 'currency', 'percent', 'text'])
 export type ValueFormat = z.infer<typeof formatSchema>
 const sectionSchema = z.object({
-  kind: z.enum(['metric', 'table', 'bar', 'line', 'donut', 'insight']),
+  kind: z.enum(['metric', 'table', 'bar', 'line', 'donut', 'insight', ...crmKinds]),
   title: z.string(),
   description: z.string(),
   columns: z.array(z.string()),
@@ -15,6 +16,7 @@ const sectionSchema = z.object({
   value_column: z.string().nullable(),
   row_index: z.number().nullable(),
   format: formatSchema,
+  bindings: z.array(z.object({ field: z.string(), column: z.string() })).optional(),
 })
 export const snapshotSchema = z.object({
   title: z.string(),
@@ -36,6 +38,7 @@ export const snapshotSchema = z.object({
   generated_at: z.string(),
   reference_date: z.string(),
   model: z.string(),
+  catalog_example: z.string().nullish(),
   model_cost: z
     .object({
       currency: z.literal('USD'),
@@ -96,7 +99,18 @@ export const healthSchema = z.object({
   reference_date: z.string(),
   scheduler_enabled: z.boolean(),
   booking_count: z.number().nullable(),
+  company_count: z.number().nullish(),
+  contact_count: z.number().nullish(),
+  deal_count: z.number().nullish(),
 })
+const catalogSchema = z.array(
+  z.object({
+    id: z.enum(crmKinds),
+    title: z.string(),
+    description: z.string(),
+    prompt: z.string(),
+  }),
+)
 export type Analysis = z.infer<typeof analysisSchema>
 export type Snapshot = z.infer<typeof snapshotSchema>
 export type Report = z.infer<typeof reportSchema>
@@ -109,7 +123,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, options?: RequestI
       headers: { 'Content-Type': 'application/json' },
     })
   } catch {
-    throw new Error('Could not reach AeroVista. Check the backend service and try again.')
+    throw new Error('Could not reach IntelUI. Check the backend service and try again.')
   }
   if (!response.ok) {
     const body = await response.json().catch(() => null)
@@ -125,6 +139,22 @@ async function request<T>(path: string, schema: z.ZodType<T>, options?: RequestI
 }
 
 export const api = {
+  catalog: () => request('/catalog', catalogSchema),
+  catalogPreview: (kind: string) => request(`/catalog/${encodeURIComponent(kind)}`, snapshotSchema),
+  catalogAnalysis: (kind: string) =>
+    request(`/catalog/${encodeURIComponent(kind)}/analyses`, analysisSchema, { method: 'POST' }),
+  crmStatus: (
+    entity: 'tasks' | 'document_fields',
+    id: number,
+    expected_status: string,
+    status: string,
+    expected_label: string,
+    expected_field: string | null = null,
+  ) =>
+    request(`/crm/${entity}/${id}`, z.object({ id: z.number(), status: z.string() }), {
+      method: 'PATCH',
+      body: JSON.stringify({ expected_status, status, expected_label, expected_field }),
+    }),
   health: () => request('/health', healthSchema),
   history: () => request('/analyses', historySchema),
   thread: (id: string) => request(`/analyses/${id}/thread`, z.array(analysisSchema)),

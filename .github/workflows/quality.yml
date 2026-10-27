@@ -60,6 +60,7 @@ jobs:
           PY
           uv run --frozen alembic upgrade head
           uv run --frozen python -m app.seed
+          uv run --frozen python -m app.crm_seed
       - run: uv run --frozen pytest -q
 
   frontend:
