@@ -14,9 +14,9 @@ React + TypeScript · FastAPI · PostgreSQL · CopilotKit A2UI
 
 ## Demo
 
-![IntelUI Intelligence Studio demo showing live deal-pipeline and quote-simulator queries, scenario adjustments, and the relationship explorer](docs/assets/intelui-intelligence-studio-demo.gif)
+![IntelUI Intelligence Studio demo showing financial KPI cards, a monthly cash-flow line chart, and bar and donut charts of won deal contract value](docs/assets/intelui-intelligence-studio-demo.gif)
 
-Two live analytics queries, interactive quote adjustments, and a tour of the component library in the default light theme. Model waiting time is shortened.
+Four live financial queries: cash-flow KPI cards, monthly inflows and outflows in a line chart, won deal contract value by industry in a bar chart, and its regional split in a donut chart. Recorded in the default light theme; model waiting time is shortened.
 
 ## Run
 
