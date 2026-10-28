@@ -195,7 +195,7 @@ export function DocumentReview(props: CrmProps) {
           <div className="crm-document-source">
             <div>
               <FileText size={18} />
-              <span>SYNTHETIC SOURCE DOCUMENT</span>
+              <span>Synthetic source document</span>
             </div>
             <h4>{selected}</h4>
             <div className="crm-source-lines">

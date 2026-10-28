@@ -60,9 +60,8 @@ export default function ComponentLibrary({
     <div className="component-library">
       <div className="library-intro">
         <div>
-          <span className="eyebrow">BUILT FOR YOUR WORKFLOW</span>
-          <h1>A useful view for every question.</h1>
-          <p>Explore twelve interactive components with connected, synthetic business records.</p>
+          <h1>Component library</h1>
+          <p>Twelve interactive views, each running real read-only SQL against the demo data.</p>
         </div>
         <span className="library-count">
           <LayoutGrid size={18} />
@@ -71,7 +70,7 @@ export default function ComponentLibrary({
       </div>
       <div className="library-layout">
         <nav className="library-nav" aria-label="Analytics components">
-          <span className="eyebrow">COMPONENT CATALOG</span>
+          <h2 className="eyebrow">Components</h2>
           {catalog.isPending ? (
             <div className="skeleton" />
           ) : catalog.error ? (
@@ -97,7 +96,6 @@ export default function ComponentLibrary({
                 >
                   <Icon size={17} />
                   <span>{item.title}</span>
-                  <ArrowRight size={13} />
                 </button>
               )
             })
@@ -109,7 +107,7 @@ export default function ComponentLibrary({
         </nav>
         <div className="library-preview">
           <div className="library-preview-tools">
-            <span className="demo-badge">SYNTHETIC DATA</span>
+            <span className="demo-badge">Synthetic data</span>
             <button
               className="text-button"
               onClick={() => preview.refetch()}

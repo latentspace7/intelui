@@ -9,6 +9,9 @@
 *.key
 
 instructions.md
+.claude
+skills-lock.json
+
 
 .venv/
 venv/

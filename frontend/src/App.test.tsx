@@ -70,7 +70,7 @@ describe('Critical workspace interactions', () => {
     expect(question).toHaveValue('')
     expect(question).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Send question' })).toBeDisabled()
-    expect(screen.getByRole('status')).toHaveTextContent('I’ll look into that for you.')
+    expect(screen.getByRole('status')).toHaveTextContent('Preparing your report')
     expect(screen.getByText('Show revenue')).toBeVisible()
     await user.keyboard('{Enter}{Enter}')
     expect(ask).toHaveBeenCalledTimes(1)
@@ -124,6 +124,34 @@ describe('Critical workspace interactions', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save report' }))
     await waitFor(() => expect(save).toHaveBeenCalledWith(analysis.id, 'Saved revenue', 4))
     expect(await screen.findByText('Saved to your dashboard.')).toBeVisible()
+  })
+
+  it('offers the dashboard after saving and marks saved analyses', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(api, 'ask').mockResolvedValue(analysis)
+    vi.spyOn(api, 'save').mockResolvedValue(report)
+    mount()
+    await user.type(
+      screen.getByRole('textbox', { name: 'Ask an analytical question' }),
+      'Show revenue{Enter}',
+    )
+    await user.click(await screen.findByRole('button', { name: 'Save to dashboard' }))
+    vi.mocked(api.reports).mockResolvedValue([report])
+    await user.click(screen.getByRole('button', { name: 'Save report' }))
+    expect(await screen.findByRole('button', { name: 'View on dashboard' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'View dashboard' }))
+    expect(await screen.findByRole('heading', { name: 'Saved revenue' })).toBeVisible()
+  })
+
+  it('puts an earlier question back in the composer', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(api, 'ask').mockResolvedValue(analysis)
+    mount()
+    const question = screen.getByRole('textbox', { name: 'Ask an analytical question' })
+    await user.type(question, 'Show revenue{Enter}')
+    await user.click(await screen.findByRole('button', { name: 'Reuse this question' }))
+    expect(question).toHaveValue('Show revenue')
+    expect(question).toHaveFocus()
   })
 
   it('keeps the question when the provider fails', async () => {

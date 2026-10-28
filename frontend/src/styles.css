@@ -22,6 +22,7 @@
   --accent: #476bce;
   --accent-soft: #edf2ff;
   --shadow: 0 8px 30px #202b4507;
+  --sidebar-width: 270px;
   --chart-1: #4d70d3;
   --chart-2: #268c80;
   --chart-3: #8d63c2;
@@ -164,11 +165,11 @@ svg {
 }
 .brand small {
   display: block;
-  font-size: 10px;
-  letter-spacing: 2.5px;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--muted);
-  margin-top: 2px;
-  font-weight: 600;
+  margin-top: 1px;
+  font-weight: 500;
 }
 .new-analysis {
   display: flex;
@@ -184,7 +185,7 @@ svg {
   margin-bottom: 21px;
 }
 .new-analysis:hover {
-  border-color: #a4b6e4;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 .new-analysis > span {
   margin-left: auto;
@@ -222,10 +223,9 @@ svg {
   background: var(--panel);
 }
 .history-heading {
-  font-size: 11px;
-  color: #8a93a2;
+  font-size: 12px;
+  color: var(--muted);
   font-weight: 600;
-  letter-spacing: 1.3px;
   margin: 31px 13px 12px;
 }
 .history-list {
@@ -364,9 +364,8 @@ svg {
   border: 1px solid var(--border);
   color: var(--muted);
   border-radius: 4px;
-  font-size: 10px;
-  letter-spacing: 0.6px;
-  padding: 3px 5px;
+  font-size: 11px;
+  padding: 2px 6px;
 }
 .connection-label {
   color: var(--muted);
@@ -403,49 +402,42 @@ svg {
 }
 .analysis-workspace.landing .composer-area {
   position: static;
+  background: none;
+  margin-top: 0;
+  padding: 30px 0 0;
+}
+.analysis-workspace.landing .composer {
+  box-shadow: 0 10px 34px #1424430d;
 }
 .welcome {
-  padding: clamp(48px, 9vh, 110px) 0 35px;
+  padding: clamp(32px, 7vh, 88px) 0 0;
   text-align: center;
+}
+.welcome-more {
   flex: 1;
+  text-align: center;
+  padding: 36px 0 48px;
 }
-.welcome-symbol {
-  position: relative;
-  width: 62px;
-  height: 62px;
-  background: linear-gradient(150deg, var(--soft), var(--accent-soft));
-  border: 1px solid var(--border);
-  border-radius: 19px;
-  display: grid;
-  place-items: center;
-  color: #607aad;
-  margin: 0 auto 26px;
-  box-shadow: 0 5px 16px #3b54830a;
-}
-.welcome-symbol > svg {
-  transform: rotate(-13deg);
-}
-.sparkle-small {
-  position: absolute;
-  right: -5px;
-  top: -9px;
-  color: #8c9fc2;
-  font-size: 22px;
+.suggestions-heading {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+  margin-bottom: 12px;
 }
 .eyebrow {
-  font-size: 11px;
-  letter-spacing: 1.8px;
-  color: #8893a5;
+  font-size: 12px;
+  color: var(--muted);
   font-weight: 600;
 }
 .welcome h1 {
   font-size: clamp(24px, 2.6vw, 35px);
   letter-spacing: -1.1px;
-  font-weight: 500;
-  line-height: 1.25;
-  margin-top: 16px;
+  font-weight: 550;
+  line-height: 1.2;
 }
 .welcome > p {
+  max-width: 54ch;
+  margin-inline: auto;
   font-size: 15px;
   line-height: 1.85;
   color: var(--muted);
@@ -455,7 +447,6 @@ svg {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 43px;
   text-align: left;
 }
 .suggestion {
@@ -467,13 +458,11 @@ svg {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: 186px;
+  min-height: 160px;
   position: relative;
 }
 .suggestion:hover {
-  border-color: #a5b8e6;
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 .suggestion-icon {
   display: grid;
@@ -511,18 +500,14 @@ svg {
   line-height: 1.65;
   padding-bottom: 10px;
 }
-.suggestion-arrow {
-  color: #a2acbc;
-  align-self: flex-end;
-  margin-top: auto;
-}
 .source-note {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 11px;
-  color: #8a93a2;
+  font-size: 12px;
+  color: var(--muted);
   margin-top: 23px;
 }
 .composer-area {
@@ -541,15 +526,16 @@ svg {
   padding: 17px 17px 12px;
 }
 .composer:focus-within {
-  border-color: #a8bae5;
-  box-shadow: 0 0 0 3px #7696e008;
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .composer textarea {
   padding: 0;
   width: 100%;
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
   min-height: 42px;
-  max-height: 180px;
+  max-height: 220px;
   border: 0;
   outline: none;
   font-size: 16px;
@@ -574,12 +560,34 @@ svg {
   justify-content: space-between;
   margin-top: 5px;
 }
-.composer-bottom > span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.composer-hint {
   color: var(--muted);
   font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.composer:focus-within .composer-hint {
+  opacity: 1;
+}
+kbd {
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--soft);
+}
+.composer-send {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.char-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .send-button {
   display: grid;
@@ -591,19 +599,29 @@ svg {
   color: white;
 }
 .send-button:disabled {
-  background: #e9edf3;
-  color: #a0acbd;
+  background: var(--border);
+  color: var(--muted);
   opacity: 1;
+}
+:root[data-theme='dark'] .setup-note {
+  color: #dcb47a;
+}
+:root[data-theme='dark'] .send-button:not(:disabled) {
+  background: var(--accent);
+  color: var(--sidebar);
 }
 .composer-caption {
   text-align: center;
-  font-size: 11px;
-  color: #929aa8;
+  font-size: 12px;
+  color: var(--muted);
   margin-top: 13px;
 }
 .setup-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
-  color: #997642;
+  color: #82602d;
   padding: 8px 12px;
   background: var(--soft);
   border: 1px solid var(--border);
@@ -615,6 +633,25 @@ svg {
 }
 .conversation-turn {
   margin-bottom: 36px;
+  scroll-margin-top: 20px;
+}
+.user-turn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.reuse-question {
+  opacity: 0;
+}
+.user-turn:hover .reuse-question,
+.reuse-question:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .reuse-question {
+    opacity: 1;
+  }
 }
 .user-message {
   background: var(--soft);
@@ -624,6 +661,7 @@ svg {
   max-width: 85%;
   width: fit-content;
   margin-left: auto;
+  min-width: 0;
   font-size: 15px;
   line-height: 1.65;
   white-space: pre-wrap;
@@ -702,8 +740,7 @@ svg {
 }
 .chart-label {
   color: var(--muted);
-  font-size: 10px;
-  letter-spacing: 1px;
+  font-size: 12px;
 }
 .chart-container {
   padding: 0 12px;
@@ -967,19 +1004,32 @@ pre {
   color: var(--muted);
   margin-top: 6px;
 }
+.generation-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 17px;
+}
 .loading-track {
   width: 170px;
   height: 3px;
   border-radius: 3px;
   overflow: hidden;
   background: var(--accent-soft);
-  margin-top: 17px;
+}
+.elapsed {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .loading-track > span {
   display: block;
   width: 45%;
   height: 100%;
-  background: #8aa4e9;
+  background: var(--accent);
   animation: loading 1.8s ease-in-out infinite;
 }
 .dashboard-content {
@@ -1230,7 +1280,7 @@ pre {
 .toast {
   position: fixed;
   bottom: 24px;
-  left: calc(50% + 100px);
+  left: calc(50% + var(--sidebar-width) / 2);
   transform: translateX(-50%);
   z-index: 50;
   display: flex;
@@ -1247,6 +1297,19 @@ pre {
 .toast button {
   display: grid;
   place-items: center;
+}
+.toast .toast-action {
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.secondary-button.saved {
+  color: var(--chart-2);
+}
+:root[data-theme='dark'] .suggestion-icon {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  filter: brightness(1.35);
 }
 .skeleton {
   height: 160px;
@@ -1294,13 +1357,16 @@ pre {
 }
 @media (min-width: 1600px) {
   .welcome {
-    padding-top: 13vh;
+    padding-top: 11vh;
   }
-  .suggestions {
-    margin-top: 50px;
+  .welcome-more {
+    padding-top: 44px;
   }
 }
 @media (max-width: 1150px) {
+  :root {
+    --sidebar-width: 240px;
+  }
   .sidebar {
     width: 240px;
   }
@@ -1311,7 +1377,7 @@ pre {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .suggestion {
-    min-height: 143px;
+    min-height: 128px;
   }
   .suggestion-icon {
     margin-bottom: 9px;
@@ -1319,13 +1385,8 @@ pre {
   .suggestion > span:not(.suggestion-icon) {
     padding-right: 15px;
   }
-  .suggestion-arrow {
-    position: absolute;
-    bottom: 14px;
-    right: 14px;
-  }
   .welcome {
-    padding-top: 45px;
+    padding-top: 40px;
   }
   .welcome h1 {
     font-size: 28px;
@@ -1370,7 +1431,10 @@ pre {
     min-height: calc(100dvh - 62px);
   }
   .welcome {
-    padding-top: 43px;
+    padding-top: 28px;
+  }
+  .composer-hint {
+    display: none;
   }
   .welcome h1 {
     font-size: 27px;
@@ -1383,7 +1447,9 @@ pre {
   }
   .suggestions {
     gap: 10px;
-    margin-top: 30px;
+  }
+  .welcome-more {
+    padding-top: 28px;
   }
   .suggestion {
     padding: 14px;
@@ -1456,12 +1522,6 @@ pre {
   }
   .welcome h1 {
     font-size: 24px;
-  }
-  .source-note > span:first-of-type {
-    display: none;
-  }
-  .source-note > span:last-of-type {
-    width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1540,7 +1600,6 @@ pre {
 }
 .library-nav > .eyebrow {
   margin: 0 12px 12px;
-  font-size: 10px;
 }
 .library-nav > button {
   display: flex;
@@ -1549,14 +1608,11 @@ pre {
   text-align: left;
   padding: 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 .library-nav > button span {
   flex: 1;
-}
-.library-nav > button > svg:last-child {
-  opacity: 0;
 }
 .library-nav > button:hover {
   background: var(--soft);
@@ -1565,9 +1621,6 @@ pre {
   color: var(--accent);
   background: var(--accent-soft);
   font-weight: 600;
-}
-.library-nav > button.active > svg:last-child {
-  opacity: 1;
 }
 .library-data-note {
   display: flex;
@@ -1953,8 +2006,7 @@ pre {
   align-items: center;
   gap: 9px;
   color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 0.6px;
+  font-size: 12px;
 }
 .crm-document-source h4 {
   font-size: 16px;
@@ -2058,7 +2110,7 @@ pre {
   border-radius: 10px;
 }
 .crm-scenario-result > .eyebrow {
-  font-size: 9px;
+  font-size: 12px;
 }
 .crm-hero-value {
   display: block;

@@ -232,7 +232,7 @@ function ChartPanel(props: z.infer<typeof definitions.Chart.props>) {
           <h3>{title}</h3>
           {description && <p>{description}</p>}
         </div>
-        <span className="chart-label">{format === 'currency' ? 'USD' : 'RESULTS'}</span>
+        <span className="chart-label">{format === 'currency' ? 'USD' : 'Count'}</span>
       </div>
       <div
         className="chart-container"

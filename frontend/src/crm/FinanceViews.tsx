@@ -40,7 +40,7 @@ function QuoteScenario({ row }: { row: Row }) {
     <>
       <div className="crm-scenario">
         <div className="crm-scenario-controls">
-          <span className="eyebrow">EXPLORE A SCENARIO</span>
+          <span className="eyebrow">Explore a scenario</span>
           <h4>{label(row.label)}</h4>
           <p>
             {money(number(row.unit_price))} per seat / month
@@ -76,7 +76,7 @@ function QuoteScenario({ row }: { row: Row }) {
         <div className="crm-scenario-result">
           {totals ? (
             <>
-              <span className="eyebrow">SCENARIO TOTAL · USD</span>
+              <span className="eyebrow">Scenario total (USD)</span>
               <strong className="crm-hero-value">{money(totals.total)}</strong>
               <span>
                 {months} months · {quantity} seats · taxes excluded
@@ -211,7 +211,7 @@ function BudgetScenario({ row }: { row: Row }) {
           </button>
         </div>
         <div className="crm-scenario-result">
-          <span className="eyebrow">MONTHLY SURPLUS · USD</span>
+          <span className="eyebrow">Monthly surplus (USD)</span>
           <strong className={`crm-hero-value ${surplus < 0 ? 'crm-negative' : ''}`}>
             {money(surplus)}
           </strong>

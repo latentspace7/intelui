@@ -1,16 +1,24 @@
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDown,
-  ArrowRight,
   ArrowUp,
   BarChart3,
   Bookmark,
   Check,
-  ChevronDown,
   CircleHelp,
   Clock3,
+  CornerDownLeft,
   Database,
+  Info,
   LayoutDashboard,
   LoaderCircle,
   Menu,
@@ -76,6 +84,33 @@ function dateLabel(value: string) {
 }
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+}
+function initialTheme() {
+  const stored = localStorage.getItem('aerovista-theme')
+  if (stored) return stored
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+const maxQuestionLength = 2000
+const pageTitles = {
+  analysis: 'Analysis workspace',
+  dashboard: 'My dashboard',
+  catalog: 'Component library',
+}
+type Toast = { message: string; action?: { label: string; run: () => void } }
+
+function Elapsed() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setSeconds((value) => value + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <span className="elapsed">
+      <Clock3 size={12} />
+      {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+    </span>
+  )
 }
 
 function Modal({
@@ -237,7 +272,6 @@ function DashboardCard({
     <article className="dashboard-card">
       <div className="dashboard-card-header">
         <div className="report-heading">
-          <span className="eyebrow">SAVED ANALYSIS</span>
           {editing ? (
             <form
               className="inline-edit"
@@ -380,9 +414,11 @@ export default function App() {
   const [sidebar, setSidebar] = useState(false)
   const [saveAnalysis, setSaveAnalysis] = useState<Analysis | null>(null)
   const [settings, setSettings] = useState(false)
-  const [toast, setToast] = useState('')
-  const [theme, setTheme] = useState(() => localStorage.getItem('aerovista-theme') || 'light')
+  const [toast, setToast] = useState<Toast | null>(null)
+  const [theme, setTheme] = useState(initialTheme)
+  const notify = (message: string) => setToast({ message })
   const bottom = useRef<HTMLDivElement>(null)
+  const latestTurn = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const submitting = useRef(false)
   const health = useQuery({ queryKey: ['health'], queryFn: api.health, refetchInterval: 30000 })
@@ -417,19 +453,44 @@ export default function App() {
     localStorage.setItem('aerovista-theme', theme)
   }, [theme])
   useEffect(() => {
+    document.title = `${pageTitles[page]} · IntelUI`
+  }, [page])
+  useEffect(() => {
     if (toast) {
-      const id = setTimeout(() => setToast(''), 6000)
+      const id = setTimeout(() => setToast(null), 6000)
       return () => clearTimeout(id)
     }
   }, [toast])
   useEffect(() => {
-    if (pendingQuestion || analyses.length)
-      bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [pendingQuestion, analyses.length])
+    if (pendingQuestion) bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [pendingQuestion])
+  useEffect(() => {
+    // Reports can be long: land on the start of the newest answer, not its last row.
+    if (analyses.length) latestTurn.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [analyses.length])
   useEffect(() => {
     if (!ask.isPending && (ask.isSuccess || ask.isError) && page === 'analysis')
       input.current?.focus()
   }, [ask.isPending, ask.isSuccess, ask.isError, page])
+  useLayoutEffect(() => {
+    const textarea = input.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }, [draft, page, currentId])
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSidebar(false)
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target as HTMLElement
+      if (target.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (document.querySelector('dialog[open]') || !input.current || input.current.disabled) return
+      event.preventDefault()
+      input.current.focus()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
   const newAnalysis = () => {
     if (ask.isPending) return
     setPage('analysis')
@@ -457,12 +518,18 @@ export default function App() {
       await api.update(items[other].id, { position: index })
       await client.invalidateQueries({ queryKey: ['reports'] })
     } catch (error) {
-      setToast(errorMessage(error))
+      notify(errorMessage(error))
     }
+  }
+  const reuseQuestion = (question: string) => {
+    setDraft(question)
+    input.current?.focus()
   }
   const ready =
     health.data?.database && health.data?.analytics_database && health.data?.model_configured
   const landing = page === 'analysis' && !currentId && !ask.isPending
+  const savedAnalyses = new Set(reports.data?.map((report) => report.analysis_id))
+  const nearLimit = draft.length > maxQuestionLength - 200
   return (
     <div className="app-shell">
       {sidebar && (
@@ -478,7 +545,7 @@ export default function App() {
             <Building2 size={20} strokeWidth={1.8} />
           </span>
           <span>
-            IntelUI<small>INTELLIGENCE STUDIO</small>
+            IntelUI<small>Intelligence Studio</small>
           </span>
         </button>
         <button className="new-analysis" onClick={newAnalysis} disabled={ask.isPending}>
@@ -521,7 +588,7 @@ export default function App() {
             <span className="count-badge">12</span>
           </button>
         </nav>
-        <div className="history-heading">RECENT ANALYSES</div>
+        <h2 className="history-heading">Recent analyses</h2>
         <div className="history-list">
           {history.isLoading ? (
             <div className="history-empty">Loading conversations…</div>
@@ -585,14 +652,8 @@ export default function App() {
             >
               <Menu size={20} />
             </button>
-            <span className="workspace-title">
-              {page === 'dashboard'
-                ? 'My dashboard'
-                : page === 'catalog'
-                  ? 'Component library'
-                  : 'Analysis workspace'}
-            </span>
-            <span className="demo-badge">DEMO</span>
+            <span className="workspace-title">{pageTitles[page]}</span>
+            <span className="demo-badge">Demo data</span>
           </div>
           <div>
             <span className="connection-label">
@@ -637,9 +698,8 @@ export default function App() {
         ) : page === 'dashboard' ? (
           <div className="dashboard-content">
             <div className="page-intro">
-              <span className="eyebrow">YOUR PERSONAL VIEW</span>
-              <h1>A little clarity, always on hand.</h1>
-              <p>Saved insights from your conversations, ready when you need them.</p>
+              <h1>My dashboard</h1>
+              <p>Reports you save from an analysis. Refresh one to rerun its queries.</p>
             </div>
             <div className="dashboard-toolbar">
               <span>{reports.data?.length || 0} saved reports</span>
@@ -660,14 +720,13 @@ export default function App() {
                 <span className="empty-icon">
                   <Bookmark size={27} />
                 </span>
-                <h2>Your insights belong here.</h2>
+                <h2>No saved reports yet</h2>
                 <p>
-                  Ask a question, then save the report to build a dashboard around what matters to
-                  you.
+                  Ask a question in the analysis workspace, then choose Save to dashboard on the
+                  report.
                 </p>
                 <button className="primary-button" onClick={newAnalysis}>
                   Start an analysis
-                  <ArrowRight size={16} />
                 </button>
               </div>
             ) : (
@@ -679,7 +738,7 @@ export default function App() {
                     index={index}
                     total={reports.data.length}
                     move={(direction) => moveReport(index, direction)}
-                    notify={setToast}
+                    notify={notify}
                   />
                 ))}
               </div>
@@ -689,43 +748,11 @@ export default function App() {
           <div className={`analysis-workspace ${landing ? 'landing' : ''}`}>
             {landing ? (
               <div className="welcome">
-                <div className="welcome-symbol">
-                  <Building2 size={30} strokeWidth={1.4} />
-                  <span className="sparkle-small">✦</span>
-                </div>
-                <div className="eyebrow">INTELUI INTELLIGENCE STUDIO</div>
-                <h1>Where will your curiosity take you?</h1>
+                <h1>Ask about your business data</h1>
                 <p>
-                  Turn your business data into a clearer picture.
-                  <br />
-                  Ask a question. Find a pattern. Make your next move.
+                  Questions about accounts, deals, cash flow and delivery become charts and tables
+                  you can save to your dashboard.
                 </p>
-                <div className="suggestions">
-                  {questions.map(({ icon: Icon, label, text, tint }) => (
-                    <button
-                      key={label}
-                      className="suggestion"
-                      onClick={() => submit(undefined, text)}
-                    >
-                      <span className={`suggestion-icon ${tint}`}>
-                        <Icon size={19} />
-                      </span>
-                      <strong>{label}</strong>
-                      <span>{text}</span>
-                      <ArrowRight size={15} className="suggestion-arrow" />
-                    </button>
-                  ))}
-                </div>
-                <button className="library-launch" onClick={() => setPage('catalog')}>
-                  <LayoutGrid size={17} />
-                  Explore 12 interactive analytics components
-                  <ArrowRight size={15} />
-                </button>
-                <div className="source-note">
-                  <Database size={13} />
-                  Synthetic business data<span>·</span>
-                  <span>Reference date {health.data?.reference_date || '2026-10-26'}</span>
-                </div>
               </div>
             ) : (
               <div className="conversation" aria-label="Analysis conversation">
@@ -736,9 +763,24 @@ export default function App() {
                     <button onClick={() => thread.refetch()}>Retry</button>
                   </div>
                 )}
-                {analyses.map((analysis) => (
-                  <div className="conversation-turn" key={analysis.id}>
-                    <div className="user-message">{analysis.question}</div>
+                {analyses.map((analysis, index) => (
+                  <div
+                    className="conversation-turn"
+                    key={analysis.id}
+                    ref={index === analyses.length - 1 ? latestTurn : undefined}
+                  >
+                    <div className="user-turn">
+                      <button
+                        className="icon-button reuse-question"
+                        onClick={() => reuseQuestion(analysis.question)}
+                        disabled={ask.isPending}
+                        aria-label="Reuse this question"
+                        title="Reuse this question"
+                      >
+                        <CornerDownLeft size={15} />
+                      </button>
+                      <div className="user-message">{analysis.question}</div>
+                    </div>
                     <article className="assistant-message">
                       <div className="assistant-label">
                         <span className="assistant-mark">
@@ -750,13 +792,23 @@ export default function App() {
                       <h2>{analysis.snapshot.title}</h2>
                       <ReportRenderer snapshot={analysis.snapshot} />
                       <div className="report-actions">
-                        <button
-                          className="secondary-button"
-                          onClick={() => setSaveAnalysis(analysis)}
-                        >
-                          <Bookmark size={14} />
-                          Save to dashboard
-                        </button>
+                        {savedAnalyses.has(analysis.id) ? (
+                          <button
+                            className="secondary-button saved"
+                            onClick={() => setPage('dashboard')}
+                          >
+                            <Check size={14} />
+                            View on dashboard
+                          </button>
+                        ) : (
+                          <button
+                            className="secondary-button"
+                            onClick={() => setSaveAnalysis(analysis)}
+                          >
+                            <Bookmark size={14} />
+                            Save to dashboard
+                          </button>
+                        )}
                         <span>Generated {dateLabel(analysis.created_at)}</span>
                       </div>
                     </article>
@@ -770,13 +822,13 @@ export default function App() {
                         <Sparkles size={17} className="pulse" />
                       </span>
                       <div>
-                        <strong>I’ll look into that for you.</strong>
-                        <p>
-                          I’m checking the business data and preparing your report. This may take a
-                          minute or two.
-                        </p>
-                        <div className="loading-track">
-                          <span />
+                        <strong>Preparing your report</strong>
+                        <p>Querying the business data. Reports usually take one to two minutes.</p>
+                        <div className="generation-progress">
+                          <div className="loading-track">
+                            <span />
+                          </div>
+                          <Elapsed />
                         </div>
                       </div>
                     </div>
@@ -794,6 +846,7 @@ export default function App() {
               )}
               {!health.isLoading && !ready && (
                 <div className="setup-note">
+                  <Info size={15} />
                   {health.error || !health.data?.database
                     ? 'Start the backend and PostgreSQL to connect the analytics dataset.'
                     : !health.data?.model_configured
@@ -807,7 +860,7 @@ export default function App() {
                   value={draft}
                   disabled={ask.isPending}
                   onChange={(event) => setDraft(event.target.value)}
-                  maxLength={2000}
+                  maxLength={maxQuestionLength}
                   rows={2}
                   placeholder={
                     ask.isPending
@@ -829,28 +882,62 @@ export default function App() {
                   }}
                 />
                 <div className="composer-bottom">
-                  <span>
-                    <Sparkles size={14} />
-                    Analytics assistant
-                    <ChevronDown size={12} />
+                  <span className="composer-hint">
+                    <kbd>Enter</kbd> to send · <kbd>Shift</kbd> + <kbd>Enter</kbd> for a new line
                   </span>
-                  <button
-                    className="send-button"
-                    disabled={draft.trim().length < 3 || ask.isPending}
-                    aria-label="Send question"
-                  >
-                    {ask.isPending ? (
-                      <LoaderCircle size={17} className="spin" />
-                    ) : (
-                      <ArrowUp size={19} />
+                  <div className="composer-send">
+                    {nearLimit && (
+                      <span className="char-count">
+                        {draft.length}/{maxQuestionLength}
+                      </span>
                     )}
-                  </button>
+                    <button
+                      className="send-button"
+                      disabled={draft.trim().length < 3 || ask.isPending}
+                      aria-label="Send question"
+                    >
+                      {ask.isPending ? (
+                        <LoaderCircle size={17} className="spin" />
+                      ) : (
+                        <ArrowUp size={19} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </form>
               <p className="composer-caption">
                 AI-generated insights. Check the underlying data before making decisions.
               </p>
             </div>
+            {landing && (
+              <div className="welcome-more">
+                <div className="suggestions-heading">Or start from an example</div>
+                <div className="suggestions">
+                  {questions.map(({ icon: Icon, label, text, tint }) => (
+                    <button
+                      key={label}
+                      className="suggestion"
+                      onClick={() => submit(undefined, text)}
+                    >
+                      <span className={`suggestion-icon ${tint}`}>
+                        <Icon size={19} />
+                      </span>
+                      <strong>{label}</strong>
+                      <span>{text}</span>
+                    </button>
+                  ))}
+                </div>
+                <button className="library-launch" onClick={() => setPage('catalog')}>
+                  <LayoutGrid size={17} />
+                  Browse the 12 interactive components
+                </button>
+                <div className="source-note">
+                  <Database size={13} />
+                  <span>Synthetic business data, as of</span>
+                  <span>{health.data?.reference_date || '2026-10-26'}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -861,7 +948,10 @@ export default function App() {
           saved={() => {
             setSaveAnalysis(null)
             client.invalidateQueries({ queryKey: ['reports'] })
-            setToast('Saved to your dashboard.')
+            setToast({
+              message: 'Saved to your dashboard.',
+              action: { label: 'View dashboard', run: () => setPage('dashboard') },
+            })
           }}
         />
       )}
@@ -898,6 +988,10 @@ export default function App() {
                   {theme === 'light' ? 'Use dark mode' : 'Use light mode'}
                 </button>
               </dd>
+              <dt>Keyboard shortcuts</dt>
+              <dd>
+                <kbd>/</kbd> focus the question box · <kbd>Esc</kbd> close menus and dialogs
+              </dd>
             </dl>
             <p className="field-help">
               Deal values and recorded cash flows are separate measures, in USD. The demo reference
@@ -909,8 +1003,19 @@ export default function App() {
       )}
       {toast && (
         <div className="toast" role="status">
-          <span>{toast}</span>
-          <button onClick={() => setToast('')} aria-label="Dismiss notification">
+          <span>{toast.message}</span>
+          {toast.action && (
+            <button
+              className="toast-action"
+              onClick={() => {
+                toast.action?.run()
+                setToast(null)
+              }}
+            >
+              {toast.action.label}
+            </button>
+          )}
+          <button onClick={() => setToast(null)} aria-label="Dismiss notification">
             <X size={15} />
           </button>
         </div>
