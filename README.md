@@ -14,7 +14,7 @@ React + TypeScript · FastAPI · PostgreSQL · CopilotKit A2UI
 
 ## Demo
 
-![IntelUI Intelligence Studio demo showing live deal-pipeline and quote-simulator queries, scenario adjustments, and the relationship explorer](docs/assets/intelui-crm-demo.gif)
+![IntelUI Intelligence Studio demo showing live deal-pipeline and quote-simulator queries, scenario adjustments, and the relationship explorer](docs/assets/intelui-intelligence-studio-demo.gif)
 
 Two live analytics queries, interactive quote adjustments, and a tour of the component library in the default light theme. Model waiting time is shortened.
 
